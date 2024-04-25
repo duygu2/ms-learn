@@ -12,5 +12,5 @@ RUN mvn clean package -DskipTests
 #çalıştırma ksımı bu da
 FROM openjdk:17-jdk
 COPY --from=build /app/target/orderservice-0.0.1-SNAPSHOT.jar /app/orderservice.jar
-EXPOSE 8081
+#EXPOSE 8081
 CMD java -jar /app/orderservice.jar
