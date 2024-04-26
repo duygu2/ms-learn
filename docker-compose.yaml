@@ -6,6 +6,15 @@ services:
     build: ./discoveryserver
     ports:
       - "8888:8888"
+    networks:
+      - common
+
+  config-server:
+    build: ./configserver
+    ports:
+      - "8079:8079"
+    networks:
+      - common
 
   postgres:
     image: postgres
@@ -20,10 +29,20 @@ services:
     build: ./gatewayserver
     ports:
       - "8080:8080"
+    restart: on-failure
     depends_on:
       - discovery-server
+      - config-server
     environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8888/eureka
+      - SPRING_CLOUD_CONFIG_PROFILE=prod
+      - CONFIGURL=http://config-server:8079
+    networks:
+      - common
+
+networks:
+  common:
+    driver: bridge
+
 
 volumes:
   postgresql-volume:
