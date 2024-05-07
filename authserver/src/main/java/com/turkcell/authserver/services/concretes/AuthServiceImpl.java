@@ -7,14 +7,17 @@ import com.turkcell.authserver.dtos.RegisterRequest;
 import com.turkcell.authserver.entities.User;
 import com.turkcell.authserver.repositories.UserRepository;
 import com.turkcell.authserver.services.abstracts.AuthService;
+import com.turkcell.authserver.services.abstracts.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -25,6 +28,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final UserService userService;
 
     @Override
     public void register(RegisterRequest request) {
@@ -47,12 +51,12 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialsException("Invalid username or password");
         }
 
+        UserDetails user= userService.loadUserByUsername(request.getEmail());
 
         // add extra claims
         Map<String, Object> claims = new HashMap<>();
-        claims.put("UserId",1);
-        claims.put("Deneme", "Turkcell");
-
+        List<String> roles= jwtService.extractRolesFromJwt(user);
+        claims.put("roles", roles);
 
         return jwtService.generateToken(request.getEmail(),claims);
 

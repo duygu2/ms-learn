@@ -5,6 +5,7 @@ import com.turkcell.authserver.services.abstracts.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -45,7 +46,9 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests((req)->
                         req
                                 .requestMatchers(WHITE_LIST).permitAll()
-                               // .requestMatchers("/api/v1/role").hasAnyAuthority("admin")
+                                .requestMatchers("/api/v1/role").hasAnyAuthority("admin")
+                                .requestMatchers(HttpMethod.DELETE, "/api/v1/test/**").hasAnyAuthority("Test.Delete")
+                                .requestMatchers(HttpMethod.POST,"/api/v1/test/**").hasAnyAuthority("Test.Add")
                                 .anyRequest().authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable) //cross-site request forgery web güvenlik açığı
