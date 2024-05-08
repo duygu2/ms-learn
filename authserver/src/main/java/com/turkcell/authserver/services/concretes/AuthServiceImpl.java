@@ -1,6 +1,5 @@
 package com.turkcell.authserver.services.concretes;
 
-import com.turkcell.authserver.core.services.JwtService;
 import com.turkcell.authserver.core.utils.exceptions.types.InvalidCredentialsException;
 import com.turkcell.authserver.dtos.LoginRequest;
 import com.turkcell.authserver.dtos.RegisterRequest;
@@ -8,6 +7,7 @@ import com.turkcell.authserver.entities.User;
 import com.turkcell.authserver.repositories.UserRepository;
 import com.turkcell.authserver.services.abstracts.AuthService;
 import com.turkcell.authserver.services.abstracts.UserService;
+import com.turkcell.core.security.BaseJwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +26,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
+    private final BaseJwtService jwtService;
     private final UserService userService;
 
     @Override
@@ -55,9 +54,12 @@ public class AuthServiceImpl implements AuthService {
 
         // add extra claims
         Map<String, Object> claims = new HashMap<>();
-        List<String> roles= jwtService.extractRolesFromJwt(user);
-        claims.put("roles", roles);
-
+        List<String> roles= user
+                .getAuthorities()
+                .stream()
+                .map((role)-> role.getAuthority())
+                .toList();
+        claims.put("roles",roles);
         return jwtService.generateToken(request.getEmail(),claims);
 
     }
