@@ -2,6 +2,8 @@ package com.turkcell.authserver.core.configuration;
 
 import com.turkcell.authserver.services.abstracts.UserService;
 import com.turkcell.core.security.BaseJwtFilter;
+import com.turkcell.core.security.BaseSecurityConfiguration;
+import com.turkcell.core.security.BaseSecurityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +23,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfiguration {
     private final UserService userService;
-    private final BaseJwtFilter jwtFilter;
+    private final BaseSecurityService securityService;
+    private final PasswordEncoder passwordEncoder;
+
 
     //dışarı açmak istediklerimizi ekleriz buraya dinamik olması açısından
     private static final String[] WHITE_LIST={
@@ -32,13 +36,10 @@ public class SecurityConfiguration {
             "/v3/api-docs/**",
     };
 
-    @Bean
-    public PasswordEncoder passwordEncoder(){
-        return new BCryptPasswordEncoder();
-    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+        securityService.configureCommonSecurityRules(httpSecurity);
 
         httpSecurity
                 .authorizeHttpRequests((req)->
@@ -48,10 +49,8 @@ public class SecurityConfiguration {
                                 .requestMatchers(HttpMethod.DELETE, "/api/v1/test/**").hasAnyAuthority("Test.Delete")
                                 .requestMatchers(HttpMethod.POST,"/api/v1/test/**").hasAnyAuthority("Test.Add")
                                 .anyRequest().authenticated()
-                )
-                .csrf(AbstractHttpConfigurer::disable) //cross-site request forgery web güvenlik açığı
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);//bu filtreden önce çalış jwtfilter diyoruz
+                );
+
         return  httpSecurity.build();
 
     }
@@ -59,7 +58,7 @@ public class SecurityConfiguration {
     @Bean
     public AuthenticationProvider authenticationProvider(){
         DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
-        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
+        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder);
         daoAuthenticationProvider.setUserDetailsService(userService);
         return daoAuthenticationProvider;
     }
