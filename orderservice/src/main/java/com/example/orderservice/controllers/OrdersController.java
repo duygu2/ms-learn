@@ -2,8 +2,12 @@ package com.example.orderservice.controllers;
 
 import com.example.orderservice.clients.ProductServiceClient;
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.turkcell.common.events.OrderCreatedEvent;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -12,6 +16,7 @@ public class OrdersController {
    // private final WebClient.Builder webClientBuilder;
 
     private final ProductServiceClient productServiceClient;
+    private final KafkaTemplate<String,Object> kafkaTemplate;
     @PostMapping
     public String addOrder(@RequestParam int productId){
 
@@ -36,6 +41,8 @@ public class OrdersController {
         if(stockResult<0){
             throw new RuntimeException("ürün stokta yok");
         }
+        //kafkaya mesaj gönder
+        kafkaTemplate.send("orderTopic", "NewOrder", new OrderCreatedEvent(1, LocalDateTime.now().minusDays(3)));
         return "sipariş eklendi";
 
 }

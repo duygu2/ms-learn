@@ -8,3 +8,5 @@ spring:
     import: "configserver:${configUrl}"
 
 configUrl: http://localhost:8079
+
+
